@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS delta.`file:///delta/demo/Users` (
   account_status STRING,
   authentication_method STRING,
   failed_login_attempts INT
-) USING delta;
+) USING DELTA;
 
 INSERT INTO puppygraph.demo.Users
 SELECT
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS delta.`/delta/demo/InternetGateways` (
   name STRING,
   region STRING,
   status STRING
-) USING delta;
+) USING DELTA;
 
 INSERT INTO puppygraph.demo.InternetGateways
 SELECT * FROM parquet.`/parquet_data/InternetGateways.parquet`;
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS delta.`/delta/demo/UserInternetGatewayAccess` (
   granted_at TIMESTAMP,
   expires_at TIMESTAMP,
   last_accessed_at TIMESTAMP
-) USING delta;
+) USING DELTA;
 
 -- ACCESS
 INSERT INTO puppygraph.demo.UserInternetGatewayAccess
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS delta.`/delta/demo/UserInternetGatewayAccessLog` (
   user_id BIGINT,
   internet_gateway_id BIGINT,
   access_time TIMESTAMP
-) USING delta;
+) USING DELTA;
 
 INSERT INTO puppygraph.demo.UserInternetGatewayAccessLog
 SELECT
@@ -70,12 +70,12 @@ FROM parquet.`/parquet_data/UserInternetGatewayAccessLog.parquet`;
 CREATE TABLE IF NOT EXISTS delta.`/delta/demo/VPCs` (
   vpc_id BIGINT,
   name STRING
-) USING delta;
+) USING DELTA;
 
 CREATE TABLE IF NOT EXISTS delta.`/delta/demo/InternetGatewayVPC` (
   internet_gateway_id BIGINT,
   vpc_id BIGINT
-) USING delta;
+) USING DELTA;
 
 INSERT INTO puppygraph.demo.VPCs
 SELECT * FROM parquet.`/parquet_data/VPCs.parquet`;
@@ -84,7 +84,7 @@ SELECT * FROM parquet.`/parquet_data/VPCs.parquet`;
 CREATE TABLE IF NOT EXISTS delta.`/delta/demo/InternetGatewayVPC` (
   internet_gateway_id BIGINT,
   vpc_id BIGINT
-) USING delta;
+) USING DELTA;
 
 INSERT INTO puppygraph.demo.InternetGatewayVPC
 SELECT * FROM parquet.`/parquet_data/InternetGatewayVPC.parquet`;
@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS delta.`/delta/demo/Subnets` (
   subnet_id BIGINT,
   vpc_id BIGINT,
   name STRING
-) USING delta;
+) USING DELTA;
 
 INSERT INTO puppygraph.demo.Subnets
 SELECT * FROM parquet.`/parquet_data/Subnets.parquet`;
@@ -103,7 +103,7 @@ SELECT * FROM parquet.`/parquet_data/Subnets.parquet`;
 CREATE TABLE IF NOT EXISTS delta.`/delta/demo/SecurityGroups` (
   security_group_id BIGINT,
   name STRING
-) USING delta;
+) USING DELTA;
 
 INSERT INTO puppygraph.demo.SecurityGroups
 SELECT * FROM parquet.`/parquet_data/SecurityGroups.parquet`;
@@ -112,7 +112,7 @@ SELECT * FROM parquet.`/parquet_data/SecurityGroups.parquet`;
 CREATE TABLE IF NOT EXISTS delta.`/delta/demo/SubnetSecurityGroup` (
   subnet_id BIGINT,
   security_group_id BIGINT
-) USING delta;
+) USING DELTA;
 
 INSERT INTO puppygraph.demo.SubnetSecurityGroup
 SELECT * FROM parquet.`/parquet_data/SubnetSecurityGroup.parquet`;
@@ -123,7 +123,7 @@ CREATE TABLE IF NOT EXISTS delta.`/delta/demo/NetworkInterfaces` (
   subnet_id BIGINT,
   security_group_id BIGINT,
   name STRING
-) USING delta;
+) USING DELTA;
 
 INSERT INTO puppygraph.demo.NetworkInterfaces
 SELECT * FROM parquet.`/parquet_data/NetworkInterfaces.parquet`;
@@ -134,7 +134,7 @@ CREATE TABLE IF NOT EXISTS delta.`/delta/demo/VMInstances` (
   network_interface_id BIGINT,
   role_id BIGINT,
   name STRING
-) USING delta;
+) USING DELTA;
 
 INSERT INTO puppygraph.demo.VMInstances
 SELECT * FROM parquet.`/parquet_data/VMInstances.parquet`;
@@ -143,7 +143,7 @@ SELECT * FROM parquet.`/parquet_data/VMInstances.parquet`;
 CREATE TABLE IF NOT EXISTS delta.`/delta/demo/Roles` (
   role_id BIGINT,
   name STRING
-) USING delta;
+) USING DELTA;
 
 INSERT INTO puppygraph.demo.Roles
 SELECT * FROM parquet.`/parquet_data/Roles.parquet`;
@@ -152,7 +152,7 @@ SELECT * FROM parquet.`/parquet_data/Roles.parquet`;
 CREATE TABLE IF NOT EXISTS delta.`/delta/demo/Resources` (
   resource_id BIGINT,
   name STRING
-) USING delta;
+) USING DELTA;
 
 INSERT INTO puppygraph.demo.Resources
 SELECT * FROM parquet.`/parquet_data/Resources.parquet`;
@@ -161,7 +161,7 @@ SELECT * FROM parquet.`/parquet_data/Resources.parquet`;
 CREATE TABLE IF NOT EXISTS delta.`/delta/demo/RoleResourceAccess` (
   role_id BIGINT,
   resource_id BIGINT
-) USING delta;
+) USING DELTA;
 
 INSERT INTO puppygraph.demo.RoleResourceAccess
 SELECT * FROM parquet.`/parquet_data/RoleResourceAccess.parquet`;
@@ -171,7 +171,7 @@ CREATE TABLE IF NOT EXISTS delta.`/delta/demo/PublicIPs` (
   public_ip_id BIGINT,
   ip_address STRING,
   network_interface_id BIGINT
-) USING delta;
+) USING DELTA;
 
 INSERT INTO puppygraph.demo.PublicIPs
 SELECT * FROM parquet.`/parquet_data/PublicIPs.parquet`;
@@ -181,7 +181,7 @@ CREATE TABLE IF NOT EXISTS delta.`/delta/demo/PrivateIPs` (
   private_ip_id BIGINT,
   ip_address STRING,
   network_interface_id BIGINT
-) USING delta;
+) USING DELTA;
 
 INSERT INTO puppygraph.demo.PrivateIPs
 SELECT * FROM parquet.`/parquet_data/PrivateIPs.parquet`;
@@ -193,7 +193,7 @@ CREATE TABLE IF NOT EXISTS delta.`/delta/demo/IngressRules` (
   protocol STRING,
   port_range STRING,
   source STRING
-) USING delta;
+) USING DELTA;
 
 INSERT INTO puppygraph.demo.IngressRules
 SELECT * FROM parquet.`/parquet_data/IngressRules.parquet`;
@@ -202,7 +202,7 @@ SELECT * FROM parquet.`/parquet_data/IngressRules.parquet`;
 CREATE TABLE IF NOT EXISTS delta.`/delta/demo/IngressRuleInternetGateway` (
   ingress_rule_id BIGINT,
   internet_gateway_id BIGINT
-) USING delta;
+) USING DELTA;
 
 INSERT INTO puppygraph.demo.IngressRuleInternetGateway
 SELECT * FROM parquet.`/parquet_data/IngressRuleInternetGateway.parquet`;
