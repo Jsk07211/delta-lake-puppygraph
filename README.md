@@ -17,8 +17,10 @@ Set Up Unity Catalog
 docker compose up -d
 chmod +x create.sh
 ./create.sh 
-docker compose exec spark bash -lc '/opt/spark/bin/spark-sql -f /sql/load_to_delta.sql' 2>&1 debug.log
+docker compose exec spark bash -lc '/opt/spark/bin/spark-sql -f /sql/load_to_delta.sql'
 ```
+
+PuppyGraph connects via http://unitycatalog:8080
 
 docker compose down --remove-orphans
 

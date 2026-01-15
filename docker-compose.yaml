@@ -5,6 +5,7 @@ services:
       deltalake_net:
     volumes:
       - ./delta:/delta
+      - ./create.sh:/tmp/create.sh
     ports:
       - "9000:8080"
       - "3000:3000"
@@ -26,6 +27,8 @@ services:
     container_name: puppygraph
     networks:
       deltalake_net:
+    volumes:
+      - ./delta:/delta
     environment:
       - PUPPYGRAPH_USERNAME=puppygraph
       - PUPPYGRAPH_PASSWORD=puppygraph123
