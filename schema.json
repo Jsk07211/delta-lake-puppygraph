@@ -8,6 +8,9 @@
                 "host": "http://unitycatalog:8080", 
                 "token": "no-use", 
                 "databricksCatalogName": "puppygraph"
+            },
+            "storage": {
+              "type": "FromMetaStore"
             }
         }
     ], 

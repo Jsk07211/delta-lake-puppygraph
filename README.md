@@ -1,59 +1,166 @@
-## Unity Catalog Preparation
-### Starting Server
-▶️ Build Unity Catalog from Open Source
+# PuppyGraph + Delta Lake = Graph Lakehouse
+## Summary
+This demo showcases a basic graph analysis workflow by integrating Apache Hudi tables with PuppyGraph.
 
-```
-git clone https://github.com/unitycatalog/unitycatalog
-cd unitycatalog
-build/sbt package
-```
-▶️ Run the following command under the same `unitycatalog` folder to start a Unity Catalog server at port `9000`
+Components of the project:
 
+* Storage: Local Machine
+* Data Lakehouse: Delta Lake
+* Catalog: Unity Catalog
+* Compute engines:
+  * Spark – Initial table writes
+  * PuppyGraph – Graph query engine for complex, multi-hop graph queries
+
+This process streamlines storage, data processing and visualization, enabling graph insights from relational data.
+
+## Prerequisites
+* [Docker and Docker Compose](https://docs.docker.com/compose/)
+* [Python 3 and virtual environment](https://docs.python.org/3/library/venv.html)
+
+## Steps to Run
 ### Data Preparation
-This tutorial is designed to be comprehensive and standalone, so it includes steps to populate local tables with Unity Catalog
+```
+python3 -m venv demo
+source demo/bin/activate
+pip install -r requirements.txt
+python3 CsvToParquet.py ./csv_data ./parquet_data
+```
 
-Set Up Unity Catalog
+### Loading Data
+Start up the Docker container:
 ```
 docker compose up -d
+```
+
+We can now register our tables under Unity Catalog:
+```
 chmod +x create.sh
 ./create.sh 
+```
+
+Once everything is up and running, you can now populate the database:
+```
 docker compose exec spark bash -lc '/opt/spark/bin/spark-sql -f /sql/load_to_delta.sql'
 ```
 
-PuppyGraph connects via http://unitycatalog:8080
+### Modeling the Graph
+1. Log into the PuppyGraph Web UI at http://localhost:8081 with the following credentials:
+- Username: `puppygraph`
+- Password: `puppygraph123`
 
-docker compose down --remove-orphans
+2. Upload the schema:
+- Select the file `schema.json` in the Upload Graph Schema JSON section and click on Upload.
 
-# Working Version
-```
-cd ..
-git clone https://github.com/unitycatalog/unitycatalog
-cd unitycatalog
-build/sbt clean package publishLocal
+### Querying the Graph using Gremlin and Cypher
+- Navigate to the Query panel on the left side. The Graph Query tab offers an interactive environment for querying the graph using Gremlin and Cypher.
+- After each query, remember to clear the graph panel before executing the next query to maintain a clean visualization. 
+  You can do this by clicking the "Clear Canvas" button located in the top-right corner of the page.
 
-cp ../delta-lake-puppygraph/create_tables.sh unitycatalog/
-./bin/start-uc-server -p 9000
-```
+Example Queries:
+1. Tracing Admin Access Paths from Users to Internet Gateways.
 
-In a separate terminal:
-```
-cd /path/to/unitycatalog
-./create_tables.sh
-```
-```
-mkdir spark
-curl -O https://dlcdn.apache.org/spark/spark-3.5.7/spark-3.5.7-bin-hadoop3.tgz && \
-    tar -xf spark-3.5.7-bin-hadoop3.tgz -C spark --strip-components=1 && \
-    rm spark-3.5.7-bin-hadoop3.tgz
-
-./bin/spark-sql \
-  --packages \
-    io.delta:delta-spark_2.12:3.2.0,io.unitycatalog:unitycatalog-spark_2.12:0.2.1 \
-  --conf spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension \
-  --conf spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog \
-  --conf spark.sql.catalog.puppygraph=io.unitycatalog.spark.UCSingleCatalog \
-  --conf spark.sql.catalog.puppygraph.uri=http://localhost:9000
+**Gremlin:**
+```gremlin
+g.V().hasLabel('User').as('user')
+  .outE('ACCESS').has('access_level', 'admin').as('edge')
+  .inV()
+  .path()
 ```
 
-Run `create_tables.sh` in unitycatalog dir, and `load.sql` via spark (`./bin/spark-sql -f load.sql`)
-* TODO: Create a script to generate `load.sql`
+2. Retrieve All Access Records for User (user_id=123) Sorted by Access Time.
+
+**Gremlin:**
+```gremlin
+g.V("User[100]")
+  .outE('ACCESS_RECORD')
+  .has('access_time', gt("2024-12-01 00:00:00"))
+  .order().by('access_time', desc)
+  .valueMap()
+```
+
+3. Top 10 Users with Highest Access Record Count.
+
+**Gremlin:**
+```gremlin
+g.V().hasLabel('User')
+  .project('user','accessCount')
+    .by(valueMap('user_id','username','phone','email'))
+    .by(
+      outE('ACCESS_RECORD')
+        .has('access_time', gt("2024-01-01 00:00:00"))
+        .has('access_time', lt("2025-3-31 23:59:59"))
+        .count()
+    )
+  .order().by(select('accessCount'), desc)
+  .limit(10)
+```
+
+4. Aggregate Total Access Count per Region.
+
+**Gremlin:**
+```gremlin
+g.V().hasLabel('InternetGateway').
+  project('region','accessCount').
+    by('region').
+    by(inE('ACCESS_RECORD').count()).
+  group().
+    by(select('region')).
+    by(__.fold().unfold().select('accessCount').sum()).
+  order().by('region') 
+```
+5. Find all public IP addresses exposed to the internet, along with their associated virtual machine instances, security groups, subnets, VPCs, internet gateways, and users, displaying all these entities in the traversal path.
+
+**Gremlin:**
+```gremlin 
+  g.V().hasLabel('PublicIP').as('ip')
+  .in('HAS_PUBLIC_IP').as('ni')
+  .in('PROTECTS').hasLabel('SecurityGroup').as('sg')
+  .out('HAS_RULE').hasLabel('IngressRule').as('rule')
+  .where(
+    __.out('ALLOWS_TRAFFIC_FROM').hasLabel('InternetGateway')
+  )
+  .select('ni')
+    .out('ATTACHED_TO').hasLabel('VMInstance').as('vm')
+  .select('ni')
+    .in('HOSTS_INTERFACE').hasLabel('Subnet').as('subnet')
+    .in('CONTAINS').hasLabel('VPC').as('vpc')
+    .in('GATEWAY_TO').hasLabel('InternetGateway').as('igw')
+    .in('ACCESS').hasLabel('User').as('user')
+  .path()
+  .limit(1000)
+```
+
+6. Find roles that have been granted excessive access permissions, along with their associated virtual machine instances.
+
+**Gremlin:**
+```gremlin
+g.V().hasLabel('Role').as('role')
+ .where(
+   __.out('ALLOWS_ACCESS_TO').count().is(gt(4L))
+ )
+ .out('ALLOWS_ACCESS_TO').hasLabel('Resource').as('resource')
+ .select('role') 
+ .in('ASSIGNED_ROLE').hasLabel('VMInstance').as('vm')
+ .path()
+```
+
+7. Find security groups that have ingress rules permitting traffic from any IP address (0.0.0.0/0) to sensitive ports (22 or 3389), and retrieve the associated ingress rules, network interfaces, and virtual machine instances in the traversal path.
+
+**Gremlin:**
+```gremlin
+g.V().hasLabel('SecurityGroup').as('sg')
+  .out('HAS_RULE')
+    .has('source', '0.0.0.0/0')
+    .has('port_range', P.within('22', '3389'))
+    .hasLabel('IngressRule').as('rule')
+  .in('HAS_RULE').as('sg')
+  .out('PROTECTS').hasLabel('NetworkInterface').as('ni')
+  .out('ATTACHED_TO').hasLabel('VMInstance').as('vm')
+  .path()
+```
+
+### Cleanup and Teardown
+- To stop and remove the containers, networks, and volumes, run:
+```
+docker compose down --volumes --remove-orphans
+```
